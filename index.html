@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PodBook — Autonomous Transit</title>
+    <meta name="description"
+        content="Book an autonomous transit pod in Borivali, Mumbai. Real-time pod tracking and smart pickup.">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --card-dark: #16161e;
+            --card-border: rgba(255, 255, 255, 0.06);
+            --accent: #00e5b0;
+            --accent-dim: rgba(0, 229, 176, 0.15);
+            --accent-glow: rgba(0, 229, 176, 0.4);
+            --danger: #ff4d6d;
+            --text-primary: #f0f0f5;
+            --text-secondary: #6b6b7e;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --safe-top: env(safe-area-inset-top, 0px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: var(--text-primary);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 430px;
+            height: 100dvh;
+            position: relative;
+            background: var(--bg-dark);
+            box-shadow: 0 0 80px rgba(0, 229, 176, 0.05), 0 0 1px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        /* ── Screen Transitions ── */
+        .screen {
+            position: absolute;
+            inset: 0;
+            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.45s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen.hidden {
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .screen.active {
+            transform: translateX(0);
+            opacity: 1;
+            z-index: 10;
+        }
+
+        /* ── Map ── */
+        .map-container {
+            flex: 1;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .leaflet-container {
+            background: #0d0d14 !important;
+        }
+
+        .leaflet-control-attribution {
+            display: none !important;
+        }
+
+        .leaflet-bar {
+            border: none !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .leaflet-bar a {
+            background: var(--card-dark) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--card-border) !important;
+        }
+
+        .leaflet-routing-container {
+            display: none !important;
+        }
+
+        /* ── Top Bar (Screen 1) ── */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: calc(var(--safe-top) + 16px) 20px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 200;
+            background: linear-gradient(180deg, rgba(10, 10, 15, 0.9) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-logo {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-name span {
+            color: var(--accent);
+        }
+
+        .pod-count-badge {
+            background: var(--accent-dim);
+            border: 1px solid var(--accent-glow);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 20px;
+            pointer-events: none;
+        }
+
+        /* ── Top Bar (Screen 2) ── */
+        .screen2-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            padding: calc(var(--safe-top) + 12px) 16px 12px;
+            background: linear-gradient(180deg, rgba(10, 10, 15, 0.95) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .back-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-back {
+            width: 36px;
+            height: 36px;
+            background: var(--card-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: background 0.2s ease, transform 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .btn-back:active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0.92);
+        }
+
+        .header-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            opacity: 0.8;
+        }
+
+        /* ── Input Card ── */
+        .input-card {
+            pointer-events: none;
+            padding: 0 16px;
+        }
+
+        .input-group {
+            background: var(--card-dark);
+            border-radius: 20px;
+            padding: 12px;
+            pointer-events: auto;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--card-border);
+        }
+
+        .input-field {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 6px;
+            border: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-field:last-of-type {
+            margin-bottom: 0;
+        }
+
+        .input-field:focus-within {
+            border-color: var(--accent-glow);
+        }
+
+        .dot-line {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .loc-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .loc-dot.from {
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        .loc-dot.to {
+            background: var(--danger);
+            box-shadow: 0 0 6px var(--danger);
+        }
+
+        input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            width: 100%;
+            outline: none;
+        }
+
+        input::placeholder {
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* ── Bottom Actions ── */
+        .bottom-actions {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            padding-bottom: calc(var(--safe-bottom) + 20px);
+            display: flex;
+            justify-content: center;
+            z-index: 200;
+            background: linear-gradient(0deg, rgba(10, 10, 15, 0.85) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .bottom-actions>* {
+            pointer-events: auto;
+        }
+
+        /* ── Primary Button ── */
+        .btn-primary {
+            background: var(--card-dark);
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+            padding: 16px 44px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px var(--accent-dim), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            min-width: 200px;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.96);
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .btn-primary.shake {
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20% {
+                transform: translateX(-8px);
+            }
+
+            40% {
+                transform: translateX(8px);
+            }
+
+            60% {
+                transform: translateX(-6px);
+            }
+
+            80% {
+                transform: translateX(4px);
+            }
+        }
+
+        .btn-primary.arrived {
+            background: var(--accent) !important;
+            color: #000 !important;
+            border-color: var(--accent) !important;
+            animation: arrivalPulse 0.6s ease;
+        }
+
+        @keyframes arrivalPulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 4px 20px var(--accent-dim);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 8px 40px var(--accent-glow);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* ── ETA Status Strip ── */
+        #eta-strip {
+            position: absolute;
+            bottom: 90px;
+            left: 16px;
+            right: 16px;
+            z-index: 300;
+            background: var(--card-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        #eta-strip.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .eta-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-dim);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .eta-text {
+            flex: 1;
+        }
+
+        .eta-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        .eta-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 2px;
+        }
+
+        .eta-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.2;
+            }
+        }
+
+        /* ── Search Dropdown ── */
+        .search-results {
+            margin-top: 6px;
+            max-height: 230px;
+            overflow-y: auto;
+            display: none;
+            background: var(--card-dark);
+            border-radius: 14px;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--card-border);
+            pointer-events: auto;
+        }
+
+        .search-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .search-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-item:active,
+        .search-item:hover {
+            background: rgba(0, 229, 176, 0.06);
+        }
+
+        .search-item .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .search-item .address {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .no-results {
+            padding: 16px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        /* ── Hexagon Search Animation ── */
+        .hex-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        @keyframes hexExpand {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0.9;
+            }
+
+            70% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0;
+            }
+        }
+
+        @keyframes hexScan {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg) scale(1);
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(60deg) scale(1.05);
+                opacity: 0.6;
+            }
+        }
+
+        .scanning-label {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--accent);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+            pointer-events: none;
+            animation: fadeLabel 0.4s ease forwards;
+            z-index: 9999;
+        }
+
+        @keyframes fadeLabel {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* ── Custom Markers ── */
+        .pod-marker {
+            width: 13px;
+            height: 13px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 2.5px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 12px var(--accent), 0 0 24px var(--accent-dim);
+            transition: all 0.3s linear;
+            will-change: transform;
+            position: relative;
+        }
+
+        .pod-marker-pulse::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s ease-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        /* Pickup marker ripple */
+        .pickup-marker {
+            width: 14px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 0 var(--accent-glow);
+        }
+
+        .pickup-marker.ripple {
+            animation: rippleOut 1.2s ease-out infinite;
+        }
+
+        @keyframes rippleOut {
+            0% {
+                box-shadow: 0 0 0 0 var(--accent-glow);
+            }
+
+            80% {
+                box-shadow: 0 0 0 16px rgba(0, 229, 176, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 229, 176, 0);
+            }
+        }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: #000;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            z-index: 9999;
+            transition: bottom 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            box-shadow: 0 10px 40px var(--accent-glow);
+            white-space: nowrap;
+        }
+
+        #toast.show {
+            bottom: calc(var(--safe-bottom) + 30px);
+        }
+
+        /* ── Loading Spinner text ── */
+        .status-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-label::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: blink 0.8s ease-in-out infinite;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app-container">
+
+        <div id="screen-1" class="screen active">
+            <div id="map-1" class="map-container"></div>
+
+            <div class="top-bar">
+                <div class="brand">
+                    <div class="brand-logo">🚀</div>
+                    <div class="brand-name">Pod<span>Book</span></div>
+                </div>
+                <div class="pod-count-badge" id="pod-count">● 4 pods nearby</div>
+            </div>
+
+            <div class="bottom-actions">
+                <button class="btn-primary" id="btn-book-now">Book Now</button>
+            </div>
+        </div>
+
+        <div id="screen-2" class="screen hidden">
+            <div id="map-2" class="map-container"></div>
+
+            <div class="screen2-header">
+                <div class="back-row">
+                    <button class="btn-back" id="btn-back">←</button>
+                    <div class="header-title">Where are you going?</div>
+                </div>
+                <div class="input-card">
+                    <div class="input-group">
+                        <div class="input-field">
+                            <div class="loc-dot from"></div>
+                            <input type="text" id="input-from" placeholder="Pickup location" autocomplete="off">
+                        </div>
+                        <div id="results-from" class="search-results"></div>
+                        <div class="input-field">
+                            <div class="loc-dot to"></div>
+                            <input type="text" id="input-to" placeholder="Where to?" autocomplete="off">
+                        </div>
+                        <div id="results-to" class="search-results"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="eta-strip">
+                <div class="eta-icon">🚗</div>
+                <div class="eta-text">
+                    <div class="eta-label">Pod Arriving</div>
+                    <div class="eta-value" id="eta-value">Searching...</div>
+                    <div id="pod-id-label"
+                        style="font-size: 10px; color: var(--accent); margin-top: 4px; font-family: monospace; display: none;">
+                        POD ID: <span id="pod-id-value"></span></div>
+                </div>
+                <div class="eta-dot"></div>
+            </div>
+
+            <div class="bottom-actions">
+                <button class="btn-primary" id="btn-confirm-booking">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">🎉 Pod Booked!</div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDW_lr2fUieL7EZ-Aozal0iddFWWE017aE",
+            authDomain: "booking-app-48044.firebaseapp.com",
+            projectId: "booking-app-48044",
+            storageBucket: "booking-app-48044.firebasestorage.app",
+            messagingSenderId: "462859845521",
+            appId: "1:462859845521:web:4fada4c0664ee4b2532430",
+            measurementId: "G-S1PNDHD10F"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Bridge function to allow standard script to call module script
+        async function saveBooking(podId, from, to) {
+            try {
+                await addDoc(collection(db, "bookings"), {
+                    podId: podId,
+                    pickup: from,
+                    destination: to,
+                    status: "active",
+                    timestamp: serverTimestamp()
+                });
+                console.log("Firebase: Booking stored successfully.");
+            } catch (e) {
+                console.error("Firebase: Error adding document: ", e);
+            }
+        }
+        window.saveBookingToFirebase = saveBooking;
+    </script>
+
+    <script>
+        const BORIVALI = [19.2307, 72.8567];
+        const TILE = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        const NOM_URL = 'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=7&countrycodes=in&q=';
+        const CRAWL = 0.00014;
+
+        const ROADS = [
+            [[19.2190, 72.8555], [19.2240, 72.8560], [19.2307, 72.8567], [19.2380, 72.8580], [19.2440, 72.8592], [19.2510, 72.8605], [19.2570, 72.8615]],
+            [[19.2307, 72.8567], [19.2315, 72.8510], [19.2325, 72.8450], [19.2338, 72.8370], [19.2355, 72.8270], [19.2375, 72.8150], [19.2400, 72.8000]],
+            [[19.2170, 72.8475], [19.2250, 72.8500], [19.2350, 72.8515], [19.2440, 72.8525], [19.2550, 72.8538], [19.2620, 72.8548]],
+            [[19.2080, 72.8598], [19.2180, 72.8610], [19.2300, 72.8622], [19.2410, 72.8637], [19.2510, 72.8652], [19.2620, 72.8668]],
+            [[19.2200, 72.8700], [19.2250, 72.8660], [19.2300, 72.8630], [19.2350, 72.8610], [19.2400, 72.8598]]
+        ];
+
+        let map1, map2;
+        let pods = [];
+        let routingControl, bookingPod;
+        let fromLatLng, toLatLng, fromMarker, toMarker;
+        let lastTick = 0;
+        let searchDebounce;
+        let bookingActive = false;
+
+        const podChannel = new BroadcastChannel('pod_system');
+
+        function initScreen1() {
+            if (map1) return;
+            map1 = L.map('map-1', { zoomControl: false, attributionControl: false }).setView(BORIVALI, 13);
+            L.tileLayer(TILE, { maxZoom: 19 }).addTo(map1);
+            requestAnimationFrame(tick);
+        }
+
+        function spawnPod(roadIdx) {
+            if (roadIdx === undefined) roadIdx = Math.floor(Math.random() * ROADS.length);
+            const road = ROADS[roadIdx];
+            const wpIdx = Math.floor(Math.random() * (road.length - 1));
+            const icon = L.divIcon({ className: 'pod-marker pod-marker-pulse', iconSize: [13, 13], html: '' });
+            const marker = L.marker(road[wpIdx], { icon }).addTo(map1);
+            const pod = { marker, roadIdx, wpIdx, dir: 1, status: 'patrol' };
+            pods.push(pod);
+            updatePodCount();
+            return pod;
+        }
+
+        function updatePodCount() {
+            const count = pods.filter(p => p.status === 'patrol').length;
+            document.getElementById('pod-count').textContent = `● ${count} pod${count !== 1 ? 's' : ''} nearby`;
+        }
+
+        function tick(time) {
+            if (time - lastTick > 300) {
+                lastTick = time;
+                patrolPods();
+                if (bookingPod && bookingActive) moveBookingPod();
+            }
+            requestAnimationFrame(tick);
+        }
+
+        function patrolPods() {
+            pods.forEach(pod => {
+                if (pod.status !== 'patrol') return;
+                const road = ROADS[pod.roadIdx];
+                const cur = pod.marker.getLatLng();
+                const next = road[pod.wpIdx + pod.dir];
+                if (!next) { pod.dir *= -1; return; }
+
+                const dLat = next[0] - cur.lat;
+                const dLng = next[1] - cur.lng;
+                const dist = Math.sqrt(dLat * dLat + dLng * dLng);
+
+                if (dist < CRAWL) {
+                    pod.wpIdx += pod.dir;
+                    if (pod.wpIdx + pod.dir < 0 || pod.wpIdx + pod.dir >= road.length) pod.dir *= -1;
+                    pod.marker.setLatLng(next);
+                } else {
+                    const f = CRAWL / dist;
+                    pod.marker.setLatLng([cur.lat + dLat * f, cur.lng + dLng * f]);
+                }
+            });
+        }
+
+        function moveBookingPod() {
+            if (!fromLatLng || !bookingPod) return;
+            const cur = bookingPod.marker.getLatLng();
+            const tgt = L.latLng(fromLatLng);
+            const dist = cur.distanceTo(tgt);
+
+            const etaSec = Math.round(dist / 11);
+            const etaText = etaSec < 20 ? 'Pulling up...' : etaSec < 60 ? `${etaSec}s away` : `${Math.ceil(etaSec / 60)} min away`;
+            const etaEl = document.getElementById('eta-value');
+            if (etaEl) etaEl.textContent = etaText;
+
+            if (dist < 25) {
+                bookingPod.status = 'arrived';
+                bookingActive = false;
+                onPodArrived();
+                return;
+            }
+            const step = 0.07;
+            bookingPod.marker.setLatLng([
+                cur.lat + (tgt.lat - cur.lat) * step,
+                cur.lng + (tgt.lng - cur.lng) * step
+            ]);
+        }
+
+        function onPodArrived() {
+            if (fromMarker) {
+                fromMarker.setIcon(L.divIcon({ className: 'pickup-marker ripple', iconSize: [14, 14], html: '' }));
+            }
+            document.getElementById('eta-value').textContent = 'Your pod is here!';
+            document.getElementById('eta-strip').querySelector('.eta-icon').textContent = '✅';
+            const btn = document.getElementById('btn-confirm-booking');
+            btn.innerHTML = '🚀 Your Pod is Here!';
+            btn.classList.add('arrived');
+            btn.disabled = false;
+            const toast = document.getElementById('toast');
+            toast.textContent = `🎉 Pod ${bookingPod.id} Arrived!`;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => location.reload(), 2500);
+            }, 5000);
+        }
+
+        function initScreen2() {
+            if (map2) return;
+            map2 = L.map('map-2', { zoomControl: false, attributionControl: false }).setView(BORIVALI, 14);
+            L.tileLayer(TILE).addTo(map2);
+            setupSearch();
+        }
+
+        function setupSearch() {
+            ['from', 'to'].forEach(type => {
+                document.getElementById(`input-${type}`).addEventListener('input', e => {
+                    clearTimeout(searchDebounce);
+                    const q = e.target.value.trim();
+                    if (q.length < 3) { hideDropdown(type); return; }
+                    searchDebounce = setTimeout(() => doSearch(q, type), 300);
+                });
+            });
+        }
+
+        async function doSearch(q, type) {
+            try {
+                const res = await fetch(NOM_URL + encodeURIComponent(q), { headers: { 'User-Agent': 'PodBookingApp/1.0' } });
+                const data = await res.json();
+                renderDropdown(data, type);
+            } catch { }
+        }
+
+        function renderDropdown(items, type) {
+            const box = document.getElementById(`results-${type}`);
+            box.innerHTML = '';
+            box.style.display = 'block';
+            if (!items.length) { box.innerHTML = '<div class="no-results">No locations found</div>'; return; }
+            items.forEach(r => {
+                const el = document.createElement('div');
+                el.className = 'search-item';
+                el.innerHTML = `<span class="name">${r.display_name.split(',')[0]}</span><span class="address">${r.display_name}</span>`;
+                el.onclick = () => pickLocation(r, type);
+                box.appendChild(el);
+            });
+        }
+
+        function hideDropdown(type) {
+            document.getElementById(`results-${type}`).style.display = 'none';
+        }
+
+        function pickLocation(r, type) {
+            const ll = [parseFloat(r.lat), parseFloat(r.lon)];
+            document.getElementById(`input-${type}`).value = r.display_name.split(',')[0];
+            hideDropdown(type);
+
+            if (type === 'from') {
+                fromLatLng = ll;
+                if (fromMarker) map2.removeLayer(fromMarker);
+                fromMarker = L.marker(ll, { icon: L.divIcon({ className: 'pickup-marker', iconSize: [14, 14], html: '' }) }).addTo(map2);
+            } else {
+                toLatLng = ll;
+                if (toMarker) map2.removeLayer(toMarker);
+                toMarker = L.marker(ll, { icon: L.divIcon({ className: 'loc-dot to', iconSize: [9, 9], html: '' }) }).addTo(map2);
+            }
+
+            map2.setView(ll, 15);
+            if (fromLatLng && toLatLng) drawRoute(fromLatLng, toLatLng);
+        }
+
+        function drawRoute(from, to) {
+            if (routingControl) map2.removeControl(routingControl);
+            routingControl = L.Routing.control({
+                waypoints: [L.latLng(from), L.latLng(to)],
+                routeWhileDragging: false,
+                addWaypoints: false,
+                show: false,
+                lineOptions: { styles: [{ color: '#00e5b0', weight: 3.5, opacity: 0.55, dashArray: '6 10' }] },
+                createMarker: () => null
+            }).addTo(map2);
+            routingControl.on('routesfound', e => {
+                const bounds = L.latLngBounds(e.routes[0].coordinates);
+                map2.fitBounds(bounds, { padding: [80, 80] });
+            });
+        }
+
+        document.getElementById('btn-book-now').onclick = () => {
+            document.getElementById('screen-1').classList.replace('active', 'hidden');
+            document.getElementById('screen-2').classList.replace('hidden', 'active');
+            setTimeout(() => { initScreen2(); map2.invalidateSize(); }, 420);
+        };
+
+        document.getElementById('btn-back').onclick = () => {
+            document.getElementById('screen-2').classList.replace('active', 'hidden');
+            document.getElementById('screen-1').classList.replace('hidden', 'active');
+        };
+
+        document.getElementById('btn-confirm-booking').onclick = function () {
+            if (!fromLatLng || !toLatLng) {
+                this.classList.add('shake');
+                setTimeout(() => this.classList.remove('shake'), 500);
+                return;
+            }
+            if (this.disabled) return;
+            this.disabled = true;
+            this.innerHTML = '<span class="status-label">Scanning for pods...</span>';
+            map2.setView(fromLatLng, 15);
+            runHexSearch(fromLatLng, () => {
+                dispatchNearestPod.call(this);
+            });
+        };
+
+        function hexPoints(center, radiusDeg, angleDeg) {
+            const pts = [];
+            for (let i = 0; i < 6; i++) {
+                const ang = (angleDeg + i * 60) * Math.PI / 180;
+                pts.push([
+                    center[0] + radiusDeg * Math.cos(ang),
+                    center[1] + radiusDeg * Math.sin(ang) * 1.6
+                ]);
+            }
+            return pts;
+        }
+
+        function runHexSearch(center, onDone) {
+            const rings = 5;
+            const baseR = 0.003;
+            let ring = 0;
+            let angle = 0;
+            let hexLayers = [];
+
+            const scanPoly = L.polygon(hexPoints(center, baseR * 0.6, 0), {
+                color: '#00e5b0', weight: 1.5,
+                fillColor: '#00e5b0', fillOpacity: 0.04,
+                dashArray: '4 6'
+            }).addTo(map2);
+            hexLayers.push(scanPoly);
+
+            let scanAngle = 0;
+            const scanLoop = setInterval(() => {
+                scanAngle += 6;
+                scanPoly.setLatLngs(hexPoints(center, baseR * 0.6, scanAngle));
+            }, 50);
+
+            const expandNext = () => {
+                if (ring >= rings) {
+                    clearInterval(scanLoop);
+                    hexLayers.forEach(l => {
+                        let op = 1;
+                        const fade = setInterval(() => {
+                            op -= 0.15;
+                            l.setStyle({ opacity: op, fillOpacity: Math.max(0, op * 0.04) });
+                            if (op <= 0) { clearInterval(fade); map2.removeLayer(l); }
+                        }, 40);
+                    });
+                    setTimeout(onDone, 400);
+                    return;
+                }
+                const r = baseR * (ring + 1);
+                const rot = angle + ring * 15;
+                const poly = L.polygon(hexPoints(center, r, rot), {
+                    color: '#00e5b0', weight: 1, fillColor: '#00e5b0', fillOpacity: 0.03, dashArray: '3 8', opacity: 0
+                }).addTo(map2);
+                hexLayers.push(poly);
+                let op = 0;
+                const fadeIn = setInterval(() => {
+                    op = Math.min(op + 0.08, 0.7);
+                    poly.setStyle({ opacity: op });
+                    if (op >= 0.7) clearInterval(fadeIn);
+                }, 30);
+                ring++;
+                setTimeout(expandNext, 340);
+            };
+            expandNext();
+        }
+
+        function dispatchNearestPod() {
+            const btn = document.getElementById('btn-confirm-booking');
+            const podId = 'PB-' + Math.random().toString(36).substr(2, 4).toUpperCase() + '-' + Math.floor(1000 + Math.random() * 9000);
+
+            // --- SAVE TO FIREBASE ---
+            if (window.saveBookingToFirebase) {
+                window.saveBookingToFirebase(podId, fromLatLng, toLatLng);
+            }
+
+            const roadIdx = Math.floor(Math.random() * ROADS.length);
+            const pod = spawnPod(roadIdx);
+            bookingPod = pod;
+            bookingPod.id = podId;
+            bookingPod.status = 'booking';
+
+            document.getElementById('pod-id-value').textContent = podId;
+            document.getElementById('pod-id-label').style.display = 'block';
+
+            podChannel.postMessage({
+                type: 'MISSION_START', id: podId, from: fromLatLng, to: toLatLng,
+                podStart: pod.marker.getLatLng(), podRoadIdx: roadIdx
+            });
+
+            bookingPod.marker.addTo(map2);
+            bookingActive = true;
+            btn.innerHTML = '<span class="status-label">Pod is arriving...</span>';
+            document.getElementById('eta-strip').classList.add('show');
+            const bounds = L.latLngBounds([bookingPod.marker.getLatLng(), fromLatLng]);
+            map2.fitBounds(bounds, { padding: [120, 80], maxZoom: 16 });
+        }
+
+        window.onload = initScreen1;
+    </script>
+</body>
+
+</html>
