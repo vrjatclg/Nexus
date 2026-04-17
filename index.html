@@ -59,6 +59,9 @@
             transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.45s ease;
             display: flex;
             flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(100%);
         }
 
         .screen.hidden {
@@ -71,6 +74,7 @@
             transform: translateX(0);
             opacity: 1;
             z-index: 10;
+            pointer-events: auto;
         }
 
         /* ── Map ── */
@@ -679,13 +683,615 @@
             background: currentColor;
             animation: blink 0.8s ease-in-out infinite;
         }
+
+        /* ── Login Screen ── */
+        #login-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: linear-gradient(135deg, #0a0a0f 0%, #12121a 50%, #0d0d14 100%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #login-screen.active {
+            display: flex;
+        }
+
+        #particles-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .login-card {
+            position: relative;
+            width: 100%;
+            max-width: 340px;
+            background: rgba(22, 22, 30, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 32px 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 229, 176, 0.05);
+        }
+
+        .login-brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .login-brand-logo {
+            width: 48px;
+            height: 48px;
+            background: var(--accent);
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 20px var(--accent-glow);
+            margin-bottom: 12px;
+        }
+
+        .login-brand-name {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .login-brand-name span {
+            color: var(--accent);
+        }
+
+        .login-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 4px;
+        }
+
+        .login-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .login-tab.active {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .login-tab:not(.active):hover {
+            color: var(--text-primary);
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            margin-bottom: 12px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .login-input:focus {
+            border-color: var(--accent-glow);
+        }
+
+        .login-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+        }
+
+        .login-btn:hover {
+            background: #00ffc8;
+            box-shadow: 0 4px 20px var(--accent-dim);
+        }
+
+        .login-btn:active {
+            transform: scale(0.98);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .login-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 20px 0;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .login-divider::before,
+        .login-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .login-google {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .login-google:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .login-google svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .login-error {
+            background: rgba(255, 77, 109, 0.15);
+            border: 1px solid rgba(255, 77, 109, 0.3);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+        }
+
+        .login-success {
+            background: rgba(0, 229, 176, 0.15);
+            border: 1px solid rgba(0, 229, 176, 0.3);
+            color: var(--accent);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+            text-align: center;
+        }
+
+        .login-success.show {
+            display: block;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: calc(var(--safe-top) + 16px);
+            right: 20px;
+            padding: 8px 16px;
+            background: var(--card-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 200;
+            transition: all 0.2s ease;
+            display: none;
+            pointer-events: auto;
+        }
+
+        .logout-btn.show {
+            display: block;
+        }
+
+        .logout-btn:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .profile-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--card-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .profile-btn:hover {
+            border-color: var(--accent-glow);
+        }
+
+        .profile-icon {
+            font-size: 18px;
+        }
+
+        .profile-menu {
+            position: absolute;
+            top: calc(var(--safe-top) + 60px);
+            right: 20px;
+            width: 220px;
+            background: var(--card-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 8px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            z-index: 300;
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+        }
+
+        .profile-menu.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-dim);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .profile-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-email {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-divider {
+            height: 1px;
+            background: var(--card-border);
+            margin: 4px 8px;
+        }
+
+        .menu-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: none;
+            border: none;
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            text-align: left;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-icon {
+            font-size: 16px;
+        }
+
+        /* Profile Screen */
+        #screen-profile {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-dark);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+        }
+
+        #screen-profile.active {
+            display: flex;
+        }
+
+        .profile-screen-header {
+            padding: calc(var(--safe-top) + 16px) 20px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(180deg, rgba(10, 10, 15, 0.95) 0%, transparent 100%);
+        }
+
+        .btn-close {
+            width: 36px;
+            height: 36px;
+            background: var(--card-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .screen-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .profile-form {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--card-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-glow);
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            border: none;
+            border-radius: 14px;
+            color: #000;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        /* History Screen */
+        #screen-history {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-dark);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+        }
+
+        #screen-history.active {
+            display: flex;
+        }
+
+        .history-list {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: var(--card-dark);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-pod-id {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: monospace;
+        }
+
+        .history-status {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .history-status.active {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .history-status.completed {
+            background: rgba(107, 107, 126, 0.2);
+            color: var(--text-secondary);
+        }
+
+        .history-route {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .history-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .history-dot.from {
+            background: var(--accent);
+        }
+
+        .history-dot.to {
+            background: var(--danger);
+        }
+
+        .history-arrow {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .history-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .history-empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
     </style>
 </head>
 
 <body>
+    <div id="login-screen">
+        <canvas id="particles-canvas"></canvas>
+        <div class="login-card">
+            <div class="login-brand">
+                <div class="login-brand-logo">🚀</div>
+                <div class="login-brand-name">Pod<span>Book</span></div>
+            </div>
+            <div class="login-tabs">
+                <button class="login-tab active" data-tab="signin">Sign In</button>
+                <button class="login-tab" data-tab="signup">Sign Up</button>
+            </div>
+            <div id="login-error" class="login-error"></div>
+            <div id="login-success" class="login-success"></div>
+            <form id="login-form">
+                <input type="email" class="login-input" id="login-email" name="email" placeholder="Email address" required>
+                <input type="password" class="login-input" id="login-password" name="password" placeholder="Password" required>
+                <input type="password" class="login-input" id="login-confirm" name="confirm" placeholder="Confirm password" style="display: none;">
+                <button type="submit" class="login-btn" id="login-submit">Sign In</button>
+            </form>
+            <div class="login-divider">or continue with</div>
+            <button class="login-google" id="google-btn">
+                <svg viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </button>
+        </div>
+    </div>
+
     <div id="app-container">
 
-        <div id="screen-1" class="screen active">
+        <div id="screen-1" class="screen">
             <div id="map-1" class="map-container"></div>
 
             <div class="top-bar">
@@ -693,7 +1299,35 @@
                     <div class="brand-logo">🚀</div>
                     <div class="brand-name">Pod<span>Book</span></div>
                 </div>
+                <div class="top-right">
+                    <button class="profile-btn" id="btn-profile">
+                        <span class="profile-icon">👤</span>
+                    </button>
+                </div>
                 <div class="pod-count-badge" id="pod-count">● 4 pods nearby</div>
+            </div>
+
+            <div class="profile-menu" id="profile-menu">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profile-avatar">👤</div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="profile-name">User</div>
+                        <div class="profile-email" id="profile-email">user@email.com</div>
+                    </div>
+                </div>
+                <div class="profile-divider"></div>
+                <button class="menu-item" id="btn-edit-profile">
+                    <span class="menu-icon">✏️</span>
+                    <span>Edit Profile</span>
+                </button>
+                <button class="menu-item" id="btn-history">
+                    <span class="menu-icon">📋</span>
+                    <span>Booking History</span>
+                </button>
+                <button class="menu-item" id="btn-signout">
+                    <span class="menu-icon">🚪</span>
+                    <span>Sign Out</span>
+                </button>
             </div>
 
             <div class="bottom-actions">
@@ -741,6 +1375,37 @@
                 <button class="btn-primary" id="btn-confirm-booking">Confirm Booking</button>
             </div>
         </div>
+
+        <div id="screen-profile">
+            <div class="profile-screen-header">
+                <button class="btn-close" id="btn-close-profile">←</button>
+                <div class="screen-title">Edit Profile</div>
+            </div>
+            <div class="profile-form">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="profile-input-name" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="tel" class="form-input" id="profile-input-phone" placeholder="Enter phone number">
+                </div>
+                <button class="btn-save" id="btn-save-profile">Save Profile</button>
+            </div>
+        </div>
+
+        <div id="screen-history">
+            <div class="profile-screen-header">
+                <button class="btn-close" id="btn-close-history">←</button>
+                <div class="screen-title">Booking History</div>
+            </div>
+            <div class="history-list" id="history-list">
+                <div class="history-empty">
+                    <div class="history-empty-icon">📋</div>
+                    <div>No bookings yet</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="toast">🎉 Pod Booked!</div>
@@ -751,7 +1416,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, setDoc, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDW_lr2fUieL7EZ-Aozal0iddFWWE017aE",
@@ -765,16 +1431,18 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
 
-        // Bridge function to allow standard script to call module script
-        async function saveBooking(podId, from, to) {
+        async function saveBooking(podId, from, to, userEmail) {
             try {
                 await addDoc(collection(db, "bookings"), {
                     podId: podId,
                     pickup: from,
                     destination: to,
                     status: "active",
-                    timestamp: serverTimestamp()
+                    timestamp: serverTimestamp(),
+                    email: userEmail || ''
                 });
                 console.log("Firebase: Booking stored successfully.");
             } catch (e) {
@@ -782,6 +1450,395 @@
             }
         }
         window.saveBookingToFirebase = saveBooking;
+
+        async function saveUserProfile(userId, profileData) {
+            try {
+                await setDoc(doc(db, "users", userId), profileData, { merge: true });
+                console.log("Profile saved successfully.");
+            } catch (e) {
+                console.error("Error saving profile: ", e);
+            }
+        }
+
+        async function getUserProfile(userId) {
+            try {
+                const snap = await getDoc(doc(db, "users", userId));
+                return snap.exists() ? snap.data() : null;
+            } catch (e) {
+                console.error("Error getting profile: ", e);
+                return null;
+            }
+        }
+
+        async function getBookingHistory(userEmail) {
+            try {
+                const q = query(collection(db, "bookings"), where("email", "==", userEmail), orderBy("timestamp", "desc"));
+                const snap = await getDocs(q);
+                return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            } catch (e) {
+                console.log("History query failed, trying without orderBy");
+                const q2 = query(collection(db, "bookings"), where("email", "==", userEmail));
+                const snap = await getDocs(q2);
+                return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            }
+        }
+
+        window.firebaseAuth = {
+            signInWithEmailAndPassword: (email, password) => signInWithEmailAndPassword(auth, email, password),
+            createUserWithEmailAndPassword: (email, password) => createUserWithEmailAndPassword(auth, email, password),
+            signInWithPopup: () => signInWithPopup(auth, googleProvider),
+            onAuthStateChanged: (callback) => onAuthStateChanged(auth, callback),
+            signOut: () => signOut(auth),
+            getCurrentUser: () => auth.currentUser
+        };
+
+        window.firebaseDb = {
+            saveUserProfile,
+            getUserProfile,
+            getBookingHistory
+        };
+
+        // Dust Particles Animation
+        (function() {
+            const canvas = document.getElementById('particles-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const PARTICLE_COUNT = 90;
+            const CONNECT_DISTANCE = 120;
+            const ACCENT_COLOR = '#00e5b0';
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            function createParticle() {
+                return {
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8,
+                    radius: Math.random() * 2 + 1.5,
+                    opacity: Math.random() * 0.6 + 0.2
+                };
+            }
+
+            function initParticles() {
+                particles = [];
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    particles.push(createParticle());
+                }
+            }
+
+            function updateParticles() {
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                    if (p.x < 0) p.x = 0;
+                    if (p.x > canvas.width) p.x = canvas.width;
+                    if (p.y < 0) p.y = 0;
+                    if (p.y > canvas.height) p.y = canvas.height;
+                });
+            }
+
+            function drawConnections() {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < CONNECT_DISTANCE) {
+                            const opacity = (1 - dist / CONNECT_DISTANCE) * 0.25;
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(0, 229, 176, ${opacity})`;
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            function drawParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawConnections();
+
+                particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 229, 176, ${p.opacity})`;
+                    ctx.fill();
+                });
+            }
+
+            function animate() {
+                updateParticles();
+                drawParticles();
+                requestAnimationFrame(animate);
+            }
+
+            resize();
+            initParticles();
+            animate();
+
+            window.addEventListener('resize', () => {
+                resize();
+                initParticles();
+            });
+        })();
+
+        // Login Form Handling
+        (function() {
+            const loginScreen = document.getElementById('login-screen');
+            const loginForm = document.getElementById('login-form');
+            const loginEmail = document.getElementById('login-email');
+            const loginPassword = document.getElementById('login-password');
+            const loginConfirm = document.getElementById('login-confirm');
+            const loginSubmit = document.getElementById('login-submit');
+            const loginError = document.getElementById('login-error');
+            const loginSuccess = document.getElementById('login-success');
+            const loginTabs = document.querySelectorAll('.login-tab');
+            const googleBtn = document.getElementById('google-btn');
+
+            let isSignUp = false;
+
+            loginTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    loginTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    isSignUp = tab.dataset.tab === 'signup';
+                    loginConfirm.style.display = isSignUp ? 'block' : 'none';
+                    loginSubmit.textContent = isSignUp ? 'Create Account' : 'Sign In';
+                    loginError.classList.remove('show');
+                    loginSuccess.classList.remove('show');
+                });
+            });
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                loginError.classList.remove('show');
+                loginSuccess.classList.remove('show');
+                loginSubmit.disabled = true;
+                loginSubmit.textContent = 'Please wait...';
+
+                const email = loginEmail.value.trim();
+                const password = loginPassword.value;
+
+                try {
+                    if (!window.firebaseAuth) {
+                        throw new Error('Auth not initialized. Please refresh.');
+                    }
+
+                    if (isSignUp) {
+                        const confirmPwd = loginConfirm.value;
+                        if (password !== confirmPwd) {
+                            throw new Error('Passwords do not match');
+                        }
+                        await window.firebaseAuth.createUserWithEmailAndPassword(email, password);
+                        loginSuccess.textContent = 'Account created! Redirecting...';
+                        loginSuccess.classList.add('show');
+                    } else {
+                        await window.firebaseAuth.signInWithEmailAndPassword(email, password);
+                    }
+                } catch (err) {
+                    loginError.textContent = err.message || 'Authentication failed';
+                    loginError.classList.add('show');
+                    loginSubmit.disabled = false;
+                    loginSubmit.textContent = isSignUp ? 'Create Account' : 'Sign In';
+                }
+            });
+
+            googleBtn.addEventListener('click', async () => {
+                loginError.classList.remove('show');
+                loginSuccess.classList.remove('show');
+                googleBtn.disabled = true;
+                googleBtn.innerHTML = '<span>Signing in...</span>';
+
+                try {
+                    if (!window.firebaseAuth) {
+                        throw new Error('Auth not initialized. Please refresh.');
+                    }
+                    await window.firebaseAuth.signInWithPopup();
+                } catch (err) {
+                    loginError.textContent = err.message || 'Google sign-in failed';
+                    loginError.classList.add('show');
+                    googleBtn.disabled = false;
+                    googleBtn.innerHTML = '<svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Continue with Google';
+                }
+            });
+        })();
+
+        // Auth State Management
+        (function() {
+            const loginScreen = document.getElementById('login-screen');
+            const screen1 = document.getElementById('screen-1');
+            const profileMenu = document.getElementById('profile-menu');
+            const profileBtn = document.getElementById('btn-profile');
+            const profileName = document.getElementById('profile-name');
+            const profileEmail = document.getElementById('profile-email');
+            const profileAvatar = document.getElementById('profile-avatar');
+
+            function showMainApp() {
+                loginScreen.classList.remove('active');
+                loginScreen.style.display = 'none';
+                screen1.classList.add('active');
+                const userName = localStorage.getItem('userName') || 'User';
+                const userEmail = localStorage.getItem('userEmail') || '';
+                profileName.textContent = userName;
+                profileEmail.textContent = userEmail;
+                profileAvatar.textContent = userName.charAt(0).toUpperCase();
+                if (window.initScreen1) {
+                    initScreen1();
+                }
+            }
+
+            function hideMainApp() {
+                loginScreen.style.display = 'flex';
+                loginScreen.classList.add('active');
+                screen1.classList.remove('active');
+                screen1.classList.add('hidden');
+                profileMenu.classList.remove('show');
+            }
+
+            function checkAuth() {
+                if (!window.firebaseAuth) {
+                    setTimeout(checkAuth, 100);
+                    return;
+                }
+                window.firebaseAuth.onAuthStateChanged(user => {
+                    if (user) {
+                        localStorage.setItem('userEmail', user.email || '');
+                        localStorage.setItem('userName', user.displayName || user.email || 'User');
+                        showMainApp();
+                    } else {
+                        hideMainApp();
+                    }
+                });
+            }
+
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileMenu.classList.toggle('show');
+            });
+
+            document.addEventListener('click', () => {
+                profileMenu.classList.remove('show');
+            });
+
+            checkAuth();
+        })();
+
+        // Profile Menu Handlers
+        (function() {
+            const profileMenu = document.getElementById('profile-menu');
+            const screenProfile = document.getElementById('screen-profile');
+            const screenHistory = document.getElementById('screen-history');
+            const btnEditProfile = document.getElementById('btn-edit-profile');
+            const btnHistory = document.getElementById('btn-history');
+            const btnSignout = document.getElementById('btn-signout');
+            const btnCloseProfile = document.getElementById('btn-close-profile');
+            const btnCloseHistory = document.getElementById('btn-close-history');
+            const profileInputName = document.getElementById('profile-input-name');
+            const profileInputPhone = document.getElementById('profile-input-phone');
+            const btnSaveProfile = document.getElementById('btn-save-profile');
+            const historyList = document.getElementById('history-list');
+
+            btnEditProfile.addEventListener('click', async () => {
+                profileMenu.classList.remove('show');
+                screenProfile.classList.add('active');
+                const user = window.firebaseAuth?.getCurrentUser();
+                if (user) {
+                    profileInputName.value = user.displayName || user.email?.split('@')[0] || '';
+                    if (window.firebaseDb?.getUserProfile) {
+                        const profile = await window.firebaseDb.getUserProfile(user.uid);
+                        if (profile) {
+                            profileInputPhone.value = profile.phone || '';
+                        }
+                    }
+                }
+            });
+
+            btnSaveProfile.addEventListener('click', async () => {
+                btnSaveProfile.disabled = true;
+                btnSaveProfile.textContent = 'Saving...';
+                const user = window.firebaseAuth?.getCurrentUser();
+                if (user && window.firebaseDb?.saveUserProfile) {
+                    await window.firebaseDb.saveUserProfile(user.uid, {
+                        displayName: profileInputName.value,
+                        phone: profileInputPhone.value,
+                        email: user.email
+                    });
+                }
+                btnSaveProfile.disabled = false;
+                btnSaveProfile.textContent = 'Save Profile';
+                screenProfile.classList.remove('active');
+                document.getElementById('profile-name').textContent = profileInputName.value || 'User';
+            });
+
+            btnCloseProfile.addEventListener('click', () => {
+                screenProfile.classList.remove('active');
+            });
+
+            btnHistory.addEventListener('click', async () => {
+                profileMenu.classList.remove('show');
+                historyList.innerHTML = '<div class="history-empty"><div class="history-empty-icon">⏳</div><div>Loading...</div></div>';
+                screenHistory.classList.add('active');
+                const userEmail = localStorage.getItem('userEmail');
+                if (userEmail && window.firebaseDb?.getBookingHistory) {
+                    const bookings = await window.firebaseDb.getBookingHistory(userEmail);
+                    renderHistory(bookings);
+                } else {
+                    renderHistory([]);
+                }
+            });
+
+            function renderHistory(bookings) {
+                if (!bookings || bookings.length === 0) {
+                    historyList.innerHTML = '<div class="history-empty"><div class="history-empty-icon">📋</div><div>No bookings yet</div></div>';
+                    return;
+                }
+                historyList.innerHTML = bookings.map(b => {
+                    const date = b.timestamp ? new Date(b.timestamp.seconds * 1000).toLocaleDateString() : 'Unknown';
+                    const pickup = Array.isArray(b.pickup) ? b.pickup.join(', ') : b.pickup;
+                    const dest = Array.isArray(b.destination) ? b.destination.join(', ') : b.destination;
+                    const routeText = pickup && dest ? `${pickup} → ${dest}` : (pickup || 'Unknown route');
+                    return `<div class="history-item">
+                        <div class="history-header">
+                            <div class="history-pod-id">${b.podId || 'N/A'}</div>
+                            <div class="history-status ${b.status || 'active'}">${b.status || 'active'}</div>
+                        </div>
+                        <div class="history-route" style="margin-top: 8px;">
+                            <span>${routeText}</span>
+                        </div>
+                        <div class="history-date">${date}</div>
+                    </div>`;
+                }).join('');
+            }
+
+            btnCloseHistory.addEventListener('click', () => {
+                screenHistory.classList.remove('active');
+            });
+
+            btnSignout.addEventListener('click', async () => {
+                profileMenu.classList.remove('show');
+                try {
+                    if (window.firebaseAuth) {
+                        await window.firebaseAuth.signOut();
+                    }
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('userName');
+                    window.location.reload();
+                } catch (err) {
+                    console.error('Logout error:', err);
+                }
+            });
+        })();
     </script>
 
     <script>
@@ -987,14 +2044,22 @@
         }
 
         document.getElementById('btn-book-now').onclick = () => {
-            document.getElementById('screen-1').classList.replace('active', 'hidden');
-            document.getElementById('screen-2').classList.replace('hidden', 'active');
+            const screen1 = document.getElementById('screen-1');
+            const screen2 = document.getElementById('screen-2');
+            screen1.classList.remove('active');
+            screen1.classList.add('hidden');
+            screen2.classList.remove('hidden');
+            screen2.classList.add('active');
             setTimeout(() => { initScreen2(); map2.invalidateSize(); }, 420);
         };
 
         document.getElementById('btn-back').onclick = () => {
-            document.getElementById('screen-2').classList.replace('active', 'hidden');
-            document.getElementById('screen-1').classList.replace('hidden', 'active');
+            const screen1 = document.getElementById('screen-1');
+            const screen2 = document.getElementById('screen-2');
+            screen2.classList.remove('active');
+            screen2.classList.add('hidden');
+            screen1.classList.remove('hidden');
+            screen1.classList.add('active');
         };
 
         document.getElementById('btn-confirm-booking').onclick = function () {
@@ -1082,7 +2147,8 @@
 
             // --- SAVE TO FIREBASE ---
             if (window.saveBookingToFirebase) {
-                window.saveBookingToFirebase(podId, fromLatLng, toLatLng);
+                const userEmail = localStorage.getItem('userEmail') || '';
+                window.saveBookingToFirebase(podId, fromLatLng, toLatLng, userEmail);
             }
 
             const roadIdx = Math.floor(Math.random() * ROADS.length);
